@@ -1,3 +1,28 @@
 source $HOME/.zprezto/runcoms/zshrc
 
 for config_file ($HOME/.yadr/zsh/*.zsh) source $config_file
+
+# Added by Antigravity
+export PATH="/Users/ajey/.antigravity/antigravity/bin:$PATH"
+
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+
+
+
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/ajey/.lmstudio/bin"
+# End of LM Studio CLI section
+
+
+# kimi-code
+export PATH="/Users/ajey/.kimi-code/bin:$PATH"
+
+
+# Added by Antigravity CLI installer
+export PATH="/Users/ajey/.local/bin:$PATH"
+
+# Added by Antigravity IDE
+export PATH="/Users/ajey/.antigravity-ide/antigravity-ide/bin:$PATH"
