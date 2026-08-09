@@ -29,7 +29,7 @@ task :install => [:submodule_init, :submodules] do
 
   install_fonts
 
-  install_term_theme if RUBY_PLATFORM.downcase.include?("darwin")
+  install_term_theme
 
   run_bundle_config
 
@@ -188,6 +188,101 @@ def install_fonts
 end
 
 def install_term_theme
+  installed = []
+  installed << 'iTerm2'  if iterm_installed?
+  installed << 'Ghostty' if ghostty_installed?
+
+  if installed.empty?
+    puts "======================================================"
+    puts "No supported terminal found (looked for iTerm2 and"
+    puts "Ghostty), so there is no terminal theme to install."
+    puts "Solarized colors for other terminals live in iTerm2/."
+    puts "======================================================"
+    puts
+    return
+  end
+
+  puts "Detected terminal(s): #{installed.join(', ')}"
+  install_iterm_theme   if iterm_installed?
+  install_ghostty_theme if ghostty_installed?
+end
+
+# iTerm2 leaves its preferences plist behind after the app is deleted, so
+# the plist alone is not proof the app is present. Check for the bundle.
+def iterm_installed?
+  return false unless RUBY_PLATFORM.downcase.include?("darwin")
+  ['/Applications/iTerm.app',
+   File.expand_path('~/Applications/iTerm.app')].any? { |p| File.exist?(p) }
+end
+
+def ghostty_installed?
+  return true if ['/Applications/Ghostty.app',
+                  File.expand_path('~/Applications/Ghostty.app')].any? { |p| File.exist?(p) }
+  system('command -v ghostty > /dev/null 2>&1')
+end
+
+# Ghostty ships Solarized as a built-in theme, so there is nothing to copy --
+# we just point its config at one. Values are built-in Ghostty theme names.
+def ghostty_available_themes
+  {
+    'Solarized Dark'                       => 'iTerm2 Solarized Dark',
+    'Solarized Light'                      => 'iTerm2 Solarized Light',
+    'Solarized (follow system light/dark)' => 'light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark'
+  }
+end
+
+# Ghostty reads the first of these that exists. On macOS 1.3+ that is
+# config.ghostty under Application Support; elsewhere it is the XDG path.
+def ghostty_config_path
+  xdg = File.join(ENV['XDG_CONFIG_HOME'] || File.expand_path('~/.config'), 'ghostty', 'config')
+  mac_dir = File.expand_path('~/Library/Application Support/com.mitchellh.ghostty')
+  candidates = [xdg, File.join(mac_dir, 'config.ghostty'), File.join(mac_dir, 'config')]
+
+  existing = candidates.find { |p| File.exist?(p) }
+  return existing if existing
+
+  RUBY_PLATFORM.downcase.include?("darwin") ? File.join(mac_dir, 'config.ghostty') : xdg
+end
+
+def install_ghostty_theme
+  puts "======================================================"
+  puts "Installing Ghostty solarized theme."
+  puts "======================================================"
+
+  themes    = ghostty_available_themes
+  selection = ask "Which theme would you like to apply to Ghostty?", (themes.keys + ['None'])
+  return if selection.nil? || selection == 'None'
+
+  theme  = themes[selection]
+  config = ghostty_config_path
+
+  puts "[Running] set 'theme = #{theme}' in #{config}"
+  return if ENV['DEBUG']
+
+  FileUtils.mkdir_p(File.dirname(config))
+  original = File.exist?(config) ? File.read(config) : ''
+
+  unless original.empty?
+    File.write("#{config}.backup", original)
+    puts "[Backup] saved existing config to #{config}.backup"
+  end
+
+  lines = original.lines
+  if lines.any? { |l| l =~ /^\s*theme\s*=/ }
+    lines = lines.map { |l| l =~ /^\s*theme\s*=/ ? "theme = #{theme}\n" : l }
+  else
+    lines << "\n" unless original.empty? || original.end_with?("\n")
+    lines << "theme = #{theme}\n"
+  end
+
+  File.write(config, lines.join)
+
+  puts "Ghostty is now using #{selection}."
+  puts "Reload with Cmd+Shift+, or open a new window to see it."
+  puts
+end
+
+def install_iterm_theme
   puts "======================================================"
   puts "Installing iTerm2 solarized theme."
   puts "======================================================"

@@ -55,8 +55,32 @@ sh -c "`curl -fsSL https://raw.githubusercontent.com/skwp/dotfiles/master/instal
 
 ## Wait, you're not done! Do this:
 
-#### Install iTerm Solarized Colors
-YADR will install Solarized colorschemes into your iTerm. Go to Profiles => Colors => Load Presets to pick Solarized Dark.
+#### Install Solarized Colors (iTerm2 / Ghostty)
+YADR detects which terminal you actually have installed and only configures that one. If it finds neither, it says so and skips the step instead of failing.
+
+**iTerm2** — Solarized colorschemes are installed as presets. Go to Profiles => Colors => Load Presets to pick Solarized Dark. YADR also offers to apply the theme to your existing profiles directly.
+
+Detection looks for `iTerm.app` itself, not its preferences file — iTerm2 leaves its plist behind after you delete the app, so a leftover plist no longer makes YADR prompt you about a terminal you don't have.
+
+**Ghostty** — Ghostty ships Solarized as a built-in theme, so there is nothing to copy. YADR sets `theme` in your Ghostty config and offers three choices:
+
+| Choice | Value written |
+| --- | --- |
+| Solarized Dark | `iTerm2 Solarized Dark` |
+| Solarized Light | `iTerm2 Solarized Light` |
+| Solarized (follow system light/dark) | `light:iTerm2 Solarized Light,dark:iTerm2 Solarized Dark` |
+
+The third option switches automatically with your OS appearance setting.
+
+YADR writes to the first config path that already exists, falling back to the platform default:
+
+* `$XDG_CONFIG_HOME/ghostty/config` (or `~/.config/ghostty/config`)
+* `~/Library/Application Support/com.mitchellh.ghostty/config.ghostty` — the macOS default on Ghostty 1.3+
+* `~/Library/Application Support/com.mitchellh.ghostty/config`
+
+Only the `theme` line is touched. Your other settings and comments are preserved, an existing `theme` line is replaced rather than duplicated (so re-running is safe), and the previous file is saved to `<config>.backup`. Config changes apply to new windows — reload an open one with `Cmd+Shift+,`.
+
+Pick `None` at either prompt to skip that terminal.
 
 #### Remap caps-lock to escape with [Karabiner-Elements](https://pqrs.org/osx/karabiner/index.html)
 The escape key is the single most used key in vim.  Old keyboards used to have Escape where Tab is today. Apple keyboards are the worst with their tiny Esc keys. But all this is fixed by remapping Caps to Escape.  If you're hitting a small target in the corner, you are slowing yourself down considerably, and probably damaging your hands with repetitive strain injuries.
